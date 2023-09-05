@@ -1,0 +1,17 @@
+﻿[
+	{
+	"name": "test_object_1",
+	"fields": [
+		{"name": "id", "domain": {"type": "long"}, "primary": "true"},
+		{"name": "code", "domain": {"type": "string", "size": "5"}},
+		{"name": "description", "domain": {"type": "string", "size": "50"}}
+		]
+	},
+	{
+	"name": "test_object_2",
+	"fields": [
+		{"name": "id", "domain": {"type": "long"}, "primary": "true"},
+		{"name": "send_date", "domain": {"type": "date"}}
+		]
+	}
+]
