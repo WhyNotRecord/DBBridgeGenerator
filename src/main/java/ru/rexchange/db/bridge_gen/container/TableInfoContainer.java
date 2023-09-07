@@ -135,7 +135,7 @@ public class TableInfoContainer {
 	}
 
 	public List<FieldInfo> getPrimaryFields() {
-		return fields.stream().filter((fi) -> fi.isPrimary()).collect(Collectors.toList());
+		return fields.stream().filter(FieldInfo::isPrimary).collect(Collectors.toList());
 	}
 
 	public void setFields(List<FieldInfo> fields) {
@@ -154,7 +154,7 @@ public class TableInfoContainer {
 			return "Long";// bigint
 		case TableInfoContainer.DataType.DOUBLE:
 			return "Double";// double precision
-    case TableInfoContainer.DataType.FLOAT:
+    case TableInfoContainer.DataType.FLOAT://TODO похоже, он загружается как Double из базы
       return "Float";// float
 		case TableInfoContainer.DataType.DATE:
 			return "Date";// date

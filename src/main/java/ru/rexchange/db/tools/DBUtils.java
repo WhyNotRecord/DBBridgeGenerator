@@ -26,7 +26,7 @@ public class DBUtils {
 		try {
 			// Execute a query
 			synchronized (connection) {
-				System.out.println("Creating statement...");
+				//LOGGER.trace("Creating statement...");
 				stmt = connection.createStatement();
 				LOGGER.trace("Executing query:\n" + sql);
 				ResultSet rs = stmt.executeQuery(sql);
@@ -50,7 +50,7 @@ public class DBUtils {
 		try {
 			// Execute a query
 			synchronized (connection) {
-        //System.out.println("Creating statement...");
+        //LOGGER.trace("Creating statement...");
 				stmt = connection.createStatement();
 				LOGGER.trace("Executing query:\n" + sql);
 				ResultSet rs = stmt.executeQuery(sql);
@@ -75,7 +75,7 @@ public class DBUtils {
 		try {
 			// Execute a query
 			synchronized (connection) {
-        //System.out.println("Creating statement...");
+        //LOGGER.trace("Creating statement...");
 				stmt = connection.createStatement();
 				LOGGER.trace("Executing query:\n" + sql);
 				ResultSet rs = stmt.executeQuery(sql);
@@ -98,7 +98,7 @@ public class DBUtils {
 		try {
 			// Execute a query
 			synchronized (connection) {
-        //System.out.println("Creating statement...");
+        //LOGGER.trace("Creating statement...");
 				stmt = connection.createStatement();
 				LOGGER.trace("Executing query:\n" + sql);
 				return stmt.execute(sql);
@@ -119,7 +119,7 @@ public class DBUtils {
 		try {
 			// Execute a query
 			synchronized (connection) {
-        //System.out.println("Creating statement...");
+        //LOGGER.trace("Creating statement...");
 				stmt = connection.prepareStatement(sql);
 				for (int i = 0; i < params.length; i++) {
 					setParameter(stmt, params[i], i + 1);
@@ -144,7 +144,7 @@ public class DBUtils {
 			// Execute a query
 			Map<String, String> result = new HashMap<>();
 			synchronized (connection) {
-        //System.out.println("Creating statement...");
+        //LOGGER.trace("Creating statement...");
 				stmt = connection.createStatement();
 				LOGGER.trace("Executing query:\n" + sql);
 				ResultSet rs = stmt.executeQuery(sql);
@@ -171,7 +171,7 @@ public class DBUtils {
 		try {
 			// Execute a query
 			synchronized (connection) {
-        //System.out.println("Creating statement...");
+        //LOGGER.trace("Creating statement...");
 				stmt = connection.prepareStatement(sql);
 				for (int i = 0; i < params.length; i++) {
 					setParameter(stmt, params[i], i + 1);

@@ -96,11 +96,7 @@ public class BridgeGenerator {
     updateFields(tableName, updatedFields);
   }
 
-  private void processNewFields(String tableName, List<FieldInfo> newFields)// todo
-                                                                            // не
-                                                                            // добавляет
-                                                                            // primary
-                                                                            // key
+  private void processNewFields(String tableName, List<FieldInfo> newFields)// todo не добавляет primary key
       throws SQLException, ClassNotFoundException {
     for (FieldInfo field : newFields) {
       db.checkDomain(field.getDomain());
