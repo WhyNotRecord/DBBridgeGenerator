@@ -180,6 +180,7 @@ public class BridgeGenerator {
 
   private void addServiceFields(StringBuilder sb) {
     sb.append(String.format("%n  private boolean isNew = true;"));
+    sb.append(String.format("%n  public boolean isNew() { return isNew; }"));
   }
 
   private void addQueryDummies(StringBuilder sb, TableInfoContainer tableInfo) {
@@ -290,12 +291,13 @@ public class BridgeGenerator {
     /*for (String pkField : pkFields) {
     	sb.append(String.format("%n    this.%1$s = %1$s;", pkField));
     }*/
+    //todo либо вернуть конструктор с ПК либо добавить статическую функцию для создания и загрузки
     sb.append(String.format("%n  }"));
   }
 
   private void addLoadFunction(StringBuilder sb, TableInfoContainer tableInfo) {
     sb.append(String.format(
-        "%n%n  public void load(Connection conn) throws SQLException {"));
+        "%n%n  public void load(Connection conn) throws SQLException, UserException, SystemException {"));
     int pkCount = 0;
     for (FieldInfo fi : tableInfo.getPrimaryFields()) {
       String fieldName = StringUtils.toLowerCamelCase(fi.getName());
@@ -313,8 +315,13 @@ public class BridgeGenerator {
     sb.append(String.format("%n    if (result != null) {"));
     for (FieldInfo fi : tableInfo.getFields()) {
       String fieldName = StringUtils.toLowerCamelCase(fi.getName());
-      sb.append(String.format("%n      this.%s = (%s) result.get(\"%s\");", fieldName,
-          fi.getDomain().getJavaType(), fi.getName()));
+      String javaType = fi.getDomain().getJavaType();
+      if ("Float".equals(javaType)) {
+        sb.append(String.format("%n      this.%1$s = result.get(FIELD_%2$s) == null ? " +
+            "null : ((Double) result.get(FIELD_%2$s)).floatValue();", fieldName, fi.getName()));
+      } else {
+        sb.append(String.format("%n      this.%s = (%s) result.get(FIELD_%s);", fieldName, javaType, fi.getName()));
+      }
     }
     sb.append(String.format("%n      isNew = false;"));
     sb.append(String.format("%n    } else {"));
