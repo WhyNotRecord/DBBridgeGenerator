@@ -124,7 +124,7 @@ public class DBUtils {
 				for (int i = 0; i < params.length; i++) {
 					setParameter(stmt, params[i], i + 1);
 				}
-				LOGGER.trace("Executing query:\n" + sql);
+				LOGGER.trace("Executing query:\n" + formatQuery(sql, params));
 				return stmt.execute();
 			}
 		} finally {
@@ -135,6 +135,16 @@ public class DBUtils {
 				LOGGER.warn("Error occured while closing prepared statement", e);
 			}
 		}
+	}
+
+	private static String formatQuery(String sql, Object[] params) {
+		if (params == null || params.length == 0 || !sql.contains("?"))
+			return sql;
+		String result = sql;
+		for (Object param : params) {
+			result = result.replaceFirst("\\?", String.valueOf(param));
+		}
+		return result;
 	}
 
 	public static Map<String, String> getStringPairs(Connection connection, String sql)
@@ -176,7 +186,7 @@ public class DBUtils {
 				for (int i = 0; i < params.length; i++) {
 					setParameter(stmt, params[i], i + 1);
 				}
-				LOGGER.trace("Executing query:\n" + sql);
+				LOGGER.trace("Executing query:\n" + formatQuery(sql, params));
 				ResultSet rs = stmt.executeQuery();
 				if (rs.next()) {
 					Map<String, Object> result = new HashMap<>();
