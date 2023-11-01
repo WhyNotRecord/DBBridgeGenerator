@@ -7,15 +7,15 @@ public class TableInfoContainer {
 	String name;
 	List<FieldInfo> fields;
 
-	public static interface DataType {
-		public static final String STRING = "string";
-		public static final String INTEGER = "int";
-		public static final String LONG = "long";
-		public static final String ID = "id";
-		public static final String DOUBLE = "double";
-    public static final String FLOAT = "float";
-		public static final String DATE = "date";
-		public static final String DATETIME = "datetime";
+	public interface DataType {
+		String STRING = "string";
+		String INTEGER = "int";
+		String LONG = "long";
+		String ID = "id";
+		String DOUBLE = "double";
+		String FLOAT = "float";
+		String DATE = "date";//todo избавиться от использования устаревшего класса
+		String DATETIME = "datetime";//todo избавиться от использования устаревшего класса
 	}
 
 	public static class FieldInfo {
@@ -149,12 +149,11 @@ public class TableInfoContainer {
 		case TableInfoContainer.DataType.INTEGER:
 			return "Integer";// integer
 		case TableInfoContainer.DataType.LONG:
-			return "Long";// bigint
 		case TableInfoContainer.DataType.ID:
 			return "Long";// bigint
 		case TableInfoContainer.DataType.DOUBLE:
 			return "Double";// double precision
-    case TableInfoContainer.DataType.FLOAT://TODO похоже, он загружается как Double из базы
+    case TableInfoContainer.DataType.FLOAT://он загружается как Double из базы
       return "Float";// float
 		case TableInfoContainer.DataType.DATE:
 			return "Date";// date
