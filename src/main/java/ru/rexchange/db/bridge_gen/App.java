@@ -1,29 +1,39 @@
 package ru.rexchange.db.bridge_gen;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
+import ru.rexchange.db.bridge_gen.model.AbstractDatabaseInteractor;
+import ru.rexchange.db.bridge_gen.model.FirebirdDatabaseInteractor;
+import ru.rexchange.db.tools.FirebirdConnectionProvider;
+import ru.rexchange.tools.FileUtils;
+
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-
-import ru.rexchange.db.bridge_gen.model.AbstractDatabaseInteractor;
-import ru.rexchange.db.bridge_gen.model.FirebirdDatabaseInteractor;
-import ru.rexchange.db.tools.FirebirdConnectionProvider;
-import ru.rexchange.tools.FileUtils;
-
 /**
  * Hello world!
  *
  */
 public class App {
-  private static final Logger LOGGER = Logger.getLogger(App.class);
+  protected static final Logger LOGGER = LogManager.getLogger(App.class);
+
+  public static void configureLogging() {
+    // import org.apache.logging.log4j.core.LoggerContext;
+    LoggerContext context = (org.apache.logging.log4j.core.LoggerContext) LogManager.getContext(false);
+    File file = new File("log4j2.xml");
+
+    // this will force a reconfiguration
+    context.setConfigLocation(file.toURI());
+  }
 
   public static void main(String[] args) {
-    PropertyConfigurator.configure("log4j.properties");
-    // BasicConfigurator.configure();
+    configureLogging();
+
     LOGGER.info("Starting Database Bridge Generator...");
     String jsonDbConfigFile = "tables.json";
     String dbPath = "localhost:default_site_db";

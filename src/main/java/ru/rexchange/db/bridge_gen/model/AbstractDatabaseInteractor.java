@@ -1,20 +1,20 @@
 package ru.rexchange.db.bridge_gen.model;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import ru.rexchange.db.bridge_gen.container.TableInfoContainer;
+import ru.rexchange.db.bridge_gen.container.TableInfoContainer.FieldInfo;
+import ru.rexchange.db.bridge_gen.container.TableInfoContainer.FieldInfo.DomainInfo;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
-import ru.rexchange.db.bridge_gen.container.TableInfoContainer;
-import ru.rexchange.db.bridge_gen.container.TableInfoContainer.FieldInfo;
-import ru.rexchange.db.bridge_gen.container.TableInfoContainer.FieldInfo.DomainInfo;
-
 public abstract class AbstractDatabaseInteractor {
   private static Connection connection = null;
-  protected static final Logger LOGGER = Logger.getLogger(AbstractDatabaseInteractor.class);
+	protected static final Logger LOGGER = LogManager.getLogger(AbstractDatabaseInteractor.class);
 	/*private static final String PROP_USER = "db.user";
 	private static final String PROP_PASS = "db.pass";
 	private static final String PROP_DRIVER = "db.jdbc.driver";

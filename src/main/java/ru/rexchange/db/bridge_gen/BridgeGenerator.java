@@ -1,5 +1,13 @@
 package ru.rexchange.db.bridge_gen;
 
+import com.google.gson.Gson;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import ru.rexchange.db.bridge_gen.container.TableInfoContainer;
+import ru.rexchange.db.bridge_gen.container.TableInfoContainer.FieldInfo;
+import ru.rexchange.db.bridge_gen.model.AbstractDatabaseInteractor;
+import ru.rexchange.tools.StringUtils;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
@@ -10,17 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
-
-import com.google.gson.Gson;
-
-import ru.rexchange.db.bridge_gen.container.TableInfoContainer;
-import ru.rexchange.db.bridge_gen.container.TableInfoContainer.FieldInfo;
-import ru.rexchange.db.bridge_gen.model.AbstractDatabaseInteractor;
-import ru.rexchange.tools.StringUtils;
-
 public class BridgeGenerator {
-  protected static final Logger LOGGER = Logger.getLogger(BridgeGenerator.class);
+  protected static final Logger LOGGER = LogManager.getLogger(BridgeGenerator.class);
   private static final String CONST_GEN_PACKAGE = "ru.rexchange.gen";
   AbstractDatabaseInteractor db = null;
 

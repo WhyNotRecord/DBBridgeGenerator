@@ -12,13 +12,14 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import ru.rexchange.exception.SystemException;
 import ru.rexchange.tools.DateUtils;
 
 public class DBUtils {
-	protected static final Logger LOGGER = Logger.getLogger(DBUtils.class);
+	protected static final Logger LOGGER = LogManager.getLogger(DBUtils.class);
 
 	public static Integer getIntValue(Connection connection, String sql)
 			throws SQLException {
