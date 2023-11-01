@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration strict="true">
+
+	<Properties>
+        <Property name="log4j.skipJansi" value="false"/>
+    </Properties>
+
+	<Appenders>
+		<Appender type="Console" name="stdout" target="SYSTEM_OUT">
+			<Layout type="PatternLayout" charset="CP866" pattern="%highlight{%d{dd.MM.yy HH:mm:ss.SSS},%t,%p,%c{1},&#9;%m%n}{FATAL=red blink, ERROR=red bold, WARN=cyan bold, INFO=yellow bold, DEBUG=default, TRACE=grey bright}"/>
+			<!--Filter type="type" ... /-->
+		</Appender>
+		<Appender type="RollingFile" name="ERRFILE" fileName="logs/error-bridge.out" append="true" filePattern="logs/error-bridge.out.%i">
+			<Layout type="PatternLayout" pattern="%d{dd.MM.yyyy HH:mm:ss.SSS} %5p [%t] %c{1} %m%n"/>
+			<Policies>
+				<SizeBasedTriggeringPolicy size="2048KB"/>
+			</Policies>
+			<DefaultRolloverStrategy max="3"/>
+		</Appender>
+		<Appender type="RollingFile" name="FILE" fileName="logs/log-bridge.out" append="true" filePattern="logs/log-bridge.out.%i">
+			<Layout type="PatternLayout" pattern="%d{dd.MM.yyyy HH:mm:ss.SSS} %5p [%t] %c{1} %m%n"/>
+			<Policies>
+				<SizeBasedTriggeringPolicy size="2048KB"/>
+			</Policies>
+			<DefaultRolloverStrategy max="5"/>
+		</Appender>
+	</Appenders>
+	<Loggers>
+		<Logger name="error.file" level="warn">
+			<AppenderRef ref="ERRFILE"/>
+		</Logger>
+		<!--Logger name="ru.rexchange" level="debug">
+			<AppenderRef ref="stdout"/>
+		</Logger-->
+		<Root level="trace">
+			<AppenderRef ref="FILE"/>
+			<AppenderRef ref="stdout" level="debug"/>
+			<AppenderRef ref="ERRFILE" level="warn"/>
+		</Root>
+	</Loggers>
+</Configuration>
