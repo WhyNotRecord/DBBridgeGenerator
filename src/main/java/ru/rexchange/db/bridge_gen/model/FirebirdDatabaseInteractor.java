@@ -4,10 +4,10 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map;
 
-import com.sun.deploy.util.StringUtils;
 import ru.rexchange.db.bridge_gen.container.TableInfoContainer;
 import ru.rexchange.db.bridge_gen.container.TableInfoContainer.FieldInfo.DomainInfo;
 import ru.rexchange.db.tools.DBUtils;
+import ru.rexchange.tools.StringUtils;
 
 public abstract class FirebirdDatabaseInteractor extends AbstractDatabaseInteractor {
 

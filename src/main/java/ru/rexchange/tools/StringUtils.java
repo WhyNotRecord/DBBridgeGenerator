@@ -1,5 +1,8 @@
 package ru.rexchange.tools;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 public class StringUtils {
 	public static String toUpperCamelCase(String s) {
 		String[] parts = s.split("_");
@@ -21,5 +24,18 @@ public class StringUtils {
 
 	static String toProperCase(String s) {
 		return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
+	}
+
+	public static String join(Collection<String> strings, String separator) {
+		StringBuilder var2 = new StringBuilder();
+
+		for (String s : strings) {
+			if (var2.length() != 0) {
+				var2.append(separator);
+			}
+			var2.append(s);
+		}
+
+		return var2.toString();
 	}
 }
