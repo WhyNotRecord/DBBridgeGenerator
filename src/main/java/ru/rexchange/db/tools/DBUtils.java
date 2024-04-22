@@ -9,7 +9,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -175,8 +177,42 @@ public class DBUtils {
 		}
 	}
 
-	public static Map<String, Object> getQueryResult(Connection connection, String sql,
-			Object... params)
+	public static List<String> getStringList(Connection connection, String sql, Object... params)
+      throws SQLException {
+		PreparedStatement stmt = null;
+		try {
+			// Execute a query
+			List<String> result = new ArrayList<>();
+			synchronized (connection) {
+        //LOGGER.trace("Creating statement...");
+				stmt = connection.prepareStatement(sql);
+				for (int i = 0; i < params.length; i++) {
+					setParameter(stmt, params[i], i + 1);
+				}
+				LOGGER.trace("Executing query:\n" + formatQuery(sql, params));
+				ResultSet rs = stmt.executeQuery(sql);
+				// Extract data from result set
+				while (rs.next()) {
+					result.add(rs.getString(1).trim());
+				}
+			}
+			return result;
+		} finally {
+			try {
+				if (stmt != null)
+					stmt.close();
+			} catch (SQLException e) {
+				LOGGER.warn("Error occured while closing prepared statement", e);
+			}
+		}
+	}
+
+	/**
+	 * Returns one row result of given sql query
+	 * @param sql - query
+	 * @param params - query parameters
+	 */
+	public static Map<String, Object> getQueryResult(Connection connection, String sql, Object... params)
       throws SQLException {
 		PreparedStatement stmt = null;
 		try {

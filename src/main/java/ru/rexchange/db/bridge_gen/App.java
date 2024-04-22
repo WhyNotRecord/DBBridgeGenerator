@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  * Hello world!
@@ -31,6 +32,7 @@ public class App {
     context.setConfigLocation(file.toURI());
   }
 
+  //todo DAO pattern https://javatutor.net/articles/j2ee-pattern-data-access-object
   public static void main(String[] args) {
     configureLogging();
 
@@ -46,6 +48,7 @@ public class App {
         System.setProperty(FirebirdConnectionProvider.DB_PASS_SYS_SETTING, args[++i]);
       } else {
         LOGGER.warn(String.format("Unknown argument %s", args[i]));
+        LOGGER.warn("Acceptable arguments: -in <db_metadata.json> -db <db_alias> -pas <db_password>");
       }
     }
     final String finalDbPath = dbPath;
@@ -54,7 +57,6 @@ public class App {
       public Connection createConnection() throws ClassNotFoundException, SQLException {
         return FirebirdConnectionProvider.createConnection(finalDbPath);
       }
-
     };
     BridgeGenerator bg = new BridgeGenerator(db);
     LOGGER.info(String.format("File %s is chosen for processing", jsonDbConfigFile));

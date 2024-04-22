@@ -11,6 +11,9 @@ import ru.rexchange.tools.StringUtils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,9 +36,9 @@ public class BridgeGenerator {
     Map<String, String> classes = new HashMap<>();
     try {
       db.initBaseDomains();
-      for (int i = 0; i < tables.length; i++) {
-        processDatabaseObjects(tables[i]);
-        classes.putAll(processCodeObjects(tables[i]));
+      for (TableInfoContainer table : tables) {
+        processDatabaseObjects(table);
+        classes.putAll(processCodeObjects(table));
       }
 
       for (Entry<String, String> e : classes.entrySet()) {
@@ -43,14 +46,15 @@ public class BridgeGenerator {
         if (!dir.exists()) {
           dir.mkdirs();
         }
-        try (OutputStream os = new FileOutputStream(
-            String.format("src/main/java/ru/rexchange/gen/%s.java", e.getKey()))) {
-          os.write(e.getValue().getBytes("UTF-8"));
+        try (OutputStream os =
+                 Files.newOutputStream(Paths.get(
+                     String.format("src/main/java/ru/rexchange/gen/%s.java", e.getKey())))) {
+          os.write(e.getValue().getBytes(StandardCharsets.UTF_8));
           LOGGER.debug(String.format("%s class exported", e.getKey()));
         }
       }
     } catch (Exception e) {
-      LOGGER.error(e);
+      LOGGER.error("Error", e);
       return false;
     }
     return true;
@@ -118,7 +122,19 @@ public class BridgeGenerator {
       db.checkDomain(field.getDomain());
       if (TableInfoContainer.DataType.ID.equals(field.getDomain().getType()) && field.isGenerated())
         db.checkSequence(field.getName(), tableName);
-      db.updateField(tableName, field.getName(), db.getDomainName(field.getDomain()));
+      Map<String, String> constraints = db.fieldConstraints(field.getName(), tableName);
+      if (constraints == null || constraints.isEmpty()) {
+        db.updateField(tableName, field.getName(), db.getDomainName(field.getDomain()));
+        return;
+      }
+
+      String constraintName = constraints.values().iterator().next();
+      db.dropConstraint(constraintName, tableName);
+      try {
+        db.updateField(tableName, field.getName(), db.getDomainName(field.getDomain()));
+      } finally {
+        db.createPrimaryKey(tableName, constraintName, constraints.keySet());
+      }
     }
   }
 

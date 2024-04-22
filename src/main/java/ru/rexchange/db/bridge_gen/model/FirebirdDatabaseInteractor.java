@@ -1,8 +1,10 @@
 package ru.rexchange.db.bridge_gen.model;
 
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Map;
 
+import com.sun.deploy.util.StringUtils;
 import ru.rexchange.db.bridge_gen.container.TableInfoContainer;
 import ru.rexchange.db.bridge_gen.container.TableInfoContainer.FieldInfo.DomainInfo;
 import ru.rexchange.db.tools.DBUtils;
@@ -17,6 +19,23 @@ public abstract class FirebirdDatabaseInteractor extends AbstractDatabaseInterac
   private static final String Q_CREATE_SEQUENCE = "create sequence %s";
   private static final String Q_INSERT_FIELD = "alter table %s add %s %s";
   private static final String Q_DROP_FIELD = "alter table %s drop %s";
+  private static final String Q_CONSTRAINT_SELECT =
+      "SELECT RIS.RDB$INDEX_NAME FROM RDB$INDEX_SEGMENTS RIS\n" +
+          "JOIN RDB$INDICES RI ON RI.RDB$INDEX_NAME = RIS.RDB$INDEX_NAME " +
+          "AND RI.RDB$RELATION_NAME = ?\n" +
+          "JOIN RDB$RELATION_CONSTRAINTS RRC ON RRC.RDB$CONSTRAINT_NAME = RIS.RDB$INDEX_NAME " +
+          "AND RRC.RDB$CONSTRAINT_TYPE = 'PRIMARY KEY'\n" +
+          "WHERE RIS.RDB$FIELD_NAME= ?";
+  private static final String Q_CONSTRAINT_FIELDS_SELECT =
+      "SELECT RIS2.RDB$FIELD_NAME, RIS.RDB$INDEX_NAME FROM RDB$INDEX_SEGMENTS RIS\n" +
+          "JOIN RDB$INDICES RI ON RI.RDB$INDEX_NAME = RIS.RDB$INDEX_NAME " +
+          "AND RI.RDB$RELATION_NAME = '%s'\n" +
+          "JOIN RDB$RELATION_CONSTRAINTS RRC ON RRC.RDB$CONSTRAINT_NAME = RIS.RDB$INDEX_NAME " +
+          "AND RRC.RDB$CONSTRAINT_TYPE = 'PRIMARY KEY'\n" +
+          "RIGHT JOIN RDB$INDEX_SEGMENTS RIS2 ON RIS2.RDB$INDEX_NAME = RIS.RDB$INDEX_NAME\n" +
+          "WHERE RIS.RDB$FIELD_NAME= '%s'";
+  private static final String Q_DROP_CONSTRAINT = "alter table %s drop constraint %s";
+  private static final String Q_CREATE_PRIMARY_KEY = "alter table %s add constraint %s primary key (%s)";
   private static final String Q_UPDATE_FIELD = "alter table %s alter column %s type %s";
 
   @Override
@@ -123,6 +142,25 @@ public abstract class FirebirdDatabaseInteractor extends AbstractDatabaseInterac
   @Override
   public void createSequence(String name) throws SQLException, ClassNotFoundException {
     DBUtils.executeQuery(getConnection(), String.format(Q_CREATE_SEQUENCE, name));
+  }
+
+  @Override
+  public Map<String, String> fieldConstraints(String field, String tableName) throws SQLException, ClassNotFoundException {
+    return DBUtils.getStringPairs(getConnection(), String.format(Q_CONSTRAINT_FIELDS_SELECT,  tableName, field));
+    //return DBUtils.getStringList(getConnection(), Q_CONSTRAINT_SELECT,  tableName, field);
+  }
+
+  @Override
+  public void dropConstraint(String constraint, String tableName) throws SQLException, ClassNotFoundException {
+    DBUtils.executeQuery(getConnection(), String.format(Q_DROP_CONSTRAINT, tableName, constraint));
+  }
+
+  @Override
+  public void createPrimaryKey(String tableName, String constraintName, Collection<String> fields)
+      throws SQLException, ClassNotFoundException {
+    DBUtils.executeQuery(getConnection(),
+        String.format(Q_CREATE_PRIMARY_KEY, tableName, constraintName, StringUtils.join(fields, ", ")));
+
   }
 
   public String getSequenceName(String fieldName, String tableName) {

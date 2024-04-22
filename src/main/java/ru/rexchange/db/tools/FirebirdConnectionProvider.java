@@ -23,8 +23,7 @@ public class FirebirdConnectionProvider {
     // Set the params
     Properties props = new Properties();
     props.setProperty("user", DEF_USER);
-    props.setProperty("password",
-        System.getProperty(DB_PASS_SYS_SETTING, DEF_PASS));
+    props.setProperty("password", System.getProperty(DB_PASS_SYS_SETTING, DEF_PASS));
     props.setProperty("charSet", "UTF-8");
     // Open a connection
     LOGGER.trace(String.format("Connecting to database %s...", dbPath));

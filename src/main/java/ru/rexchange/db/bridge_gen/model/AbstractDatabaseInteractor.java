@@ -9,6 +9,7 @@ import ru.rexchange.db.bridge_gen.container.TableInfoContainer.FieldInfo.DomainI
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -84,6 +85,15 @@ public abstract class AbstractDatabaseInteractor {
 			throws SQLException, ClassNotFoundException;
 
 	public abstract void updateField(String tableName, String name, String domainName)
+			throws SQLException, ClassNotFoundException;
+
+	public abstract Map<String, String> fieldConstraints(String field, String tableName)
+			throws SQLException, ClassNotFoundException;
+
+	public abstract void dropConstraint(String constraint, String tableName)
+			throws SQLException, ClassNotFoundException;
+
+	public abstract void createPrimaryKey(String tableName, String constraintName, Collection<String> fields)
 			throws SQLException, ClassNotFoundException;
 
 	protected String getNewTableQuery(TableInfoContainer data) {
