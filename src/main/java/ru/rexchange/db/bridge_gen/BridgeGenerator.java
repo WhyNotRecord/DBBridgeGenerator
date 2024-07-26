@@ -15,10 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class BridgeGenerator {
@@ -112,7 +109,21 @@ public class BridgeGenerator {
   private void processOldFields(String tableName, List<String> removedFields)
       throws SQLException, ClassNotFoundException {
     for (String field : removedFields) {
-      db.removeField(tableName, field);
+      Map<String, String> constraints = db.fieldConstraints(field, tableName);
+      if (constraints == null || constraints.isEmpty()) {
+        db.removeField(tableName, field);
+        continue;
+      }
+
+      String constraintName = constraints.values().iterator().next();
+      db.dropConstraint(constraintName, tableName);
+      try {
+        db.removeField(tableName, field);
+      } finally {
+        Set<String> fields = constraints.keySet();
+        fields.remove(field);
+        db.createPrimaryKey(tableName, constraintName, fields);
+      }
     }
   }
 
