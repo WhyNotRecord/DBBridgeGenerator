@@ -5,6 +5,8 @@ import java.util.Iterator;
 
 public class StringUtils {
 	public static String toUpperCamelCase(String s) {
+		if (s == null)
+			return null;
 		String[] parts = s.split("_");
 		StringBuilder camelCaseString = new StringBuilder();
 		for (String part : parts) {

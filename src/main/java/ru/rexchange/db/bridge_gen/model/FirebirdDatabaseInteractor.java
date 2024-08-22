@@ -7,6 +7,7 @@ import java.util.Map;
 import ru.rexchange.db.bridge_gen.container.TableInfoContainer;
 import ru.rexchange.db.bridge_gen.container.TableInfoContainer.FieldInfo.DomainInfo;
 import ru.rexchange.db.tools.DBUtils;
+import ru.rexchange.exception.SystemException;
 import ru.rexchange.tools.StringUtils;
 
 public abstract class FirebirdDatabaseInteractor extends AbstractDatabaseInteractor {
@@ -57,24 +58,27 @@ public abstract class FirebirdDatabaseInteractor extends AbstractDatabaseInterac
   @Override
   public String getDomainName(String type, Integer size) {
     switch (type) {
-    case TableInfoContainer.DataType.STRING:
-      return String.format("D_VARCHAR_%s", size);
-    case TableInfoContainer.DataType.INTEGER:
-      return "D_INTEGER";// integer
-    case TableInfoContainer.DataType.LONG:
-      return "D_BIGINT";// bigint
-    case TableInfoContainer.DataType.ID:
-      return "D_ID";// bigint
-    case TableInfoContainer.DataType.DOUBLE:
-      return "D_DOUBLE";// double precision
-    case TableInfoContainer.DataType.FLOAT:
-      return "D_FLOAT";// float
-    case TableInfoContainer.DataType.DATE:
-      return "D_DATE";// date
-    case TableInfoContainer.DataType.DATETIME:
-      return "D_DATETIME";// timestamp
+      case TableInfoContainer.DataType.STRING:
+        return String.format("D_VARCHAR_%s", size);
+      case TableInfoContainer.DataType.INTEGER:
+        return "D_INTEGER";// integer
+      case TableInfoContainer.DataType.BOOLEAN:
+        return "D_BOOLEAN";// smallint
+      case TableInfoContainer.DataType.LONG:
+        return "D_BIGINT";// bigint
+      case TableInfoContainer.DataType.ID:
+        return "D_ID";// bigint
+      case TableInfoContainer.DataType.DOUBLE:
+        return "D_DOUBLE";// double precision
+      case TableInfoContainer.DataType.FLOAT:
+        return "D_FLOAT";// float
+      case TableInfoContainer.DataType.DATE:
+        return "D_DATE";// date
+      case TableInfoContainer.DataType.DATETIME:
+        return "D_DATETIME";// timestamp
+      default:
+        throw new SystemException("Unknown type - " + type);
     }
-    return null;
   }
 
   @Override
@@ -101,6 +105,9 @@ public abstract class FirebirdDatabaseInteractor extends AbstractDatabaseInterac
   public void initBaseDomains() throws SQLException, ClassNotFoundException {
     if (!domainExists("D_INTEGER")) {
       createDomain(new DomainInfo(TableInfoContainer.DataType.INTEGER));
+    }
+    if (!domainExists("D_BOOLEAN")) {
+      createDomain(new DomainInfo(TableInfoContainer.DataType.BOOLEAN));
     }
     if (!domainExists("D_BIGINT")) {
       createDomain(new DomainInfo(TableInfoContainer.DataType.LONG));
@@ -177,6 +184,8 @@ public abstract class FirebirdDatabaseInteractor extends AbstractDatabaseInterac
       return String.format("varchar(%s)", domain.getSize());
     case TableInfoContainer.DataType.INTEGER:
       return "INTEGER";// integer
+    case TableInfoContainer.DataType.BOOLEAN:
+      return "SMALLINT";// smallint
     case TableInfoContainer.DataType.LONG:
       return "BIGINT";// bigint
     case TableInfoContainer.DataType.ID:

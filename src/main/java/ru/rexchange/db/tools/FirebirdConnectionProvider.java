@@ -1,14 +1,13 @@
 package ru.rexchange.db.tools;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-	
 public class FirebirdConnectionProvider {
   protected static final Logger LOGGER = LogManager.getLogger(FirebirdConnectionProvider.class);
   public static final String DB_PASS_SYS_SETTING = "ru.rexchange.db.pass";

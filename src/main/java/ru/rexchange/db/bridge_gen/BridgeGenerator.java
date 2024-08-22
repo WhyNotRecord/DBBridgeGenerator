@@ -9,7 +9,6 @@ import ru.rexchange.db.bridge_gen.model.AbstractDatabaseInteractor;
 import ru.rexchange.tools.StringUtils;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -34,7 +33,8 @@ public class BridgeGenerator {
     try {
       db.initBaseDomains();
       for (TableInfoContainer table : tables) {
-        processDatabaseObjects(table);
+        if (!table.isTransient())
+          processDatabaseObjects(table);
         classes.putAll(processCodeObjects(table));
       }
 
@@ -152,19 +152,24 @@ public class BridgeGenerator {
   private Map<String, String> processCodeObjects(TableInfoContainer tableInfo) {
     Map<String, String> result = new HashMap<>();
     String className = StringUtils.toUpperCamelCase(tableInfo.getName());
+    String parentClassName = StringUtils.toUpperCamelCase(tableInfo.getParent());
     StringBuilder sb = new StringBuilder(String.format("package %s;", CONST_GEN_PACKAGE));
     addImportBlock(sb);
-    startClass(sb, className);
+    startClass(sb, className, parentClassName);
 
     addConsts(sb, tableInfo);
-    addQueryDummies(sb, tableInfo);
-    addServiceFields(sb);
+    if (!tableInfo.isTransient()) {
+      addQueryDummies(sb, tableInfo);
+      addServiceFields(sb);
+    }
     processFields(sb, tableInfo.getFields());
     addConstructor(sb, tableInfo);
-    addLoadFunction(sb, tableInfo);
-    addSaveFunction(sb, tableInfo);
-    addInsertFunction(sb, tableInfo);
-    addUpdateFunction(sb, tableInfo);
+    if (!tableInfo.isTransient()) {
+      addLoadFunction(sb, tableInfo);
+      addSaveFunction(sb, tableInfo);
+      addInsertFunction(sb, tableInfo);
+      addUpdateFunction(sb, tableInfo);
+    }
 
     endClass(sb, className);
     result.put(className, sb.toString());
@@ -185,10 +190,14 @@ public class BridgeGenerator {
     sb.append(String.format("%nimport ru.rexchange.exception.UserException;"));
   }
 
-  private void startClass(StringBuilder sb, String className) {
+  private void startClass(StringBuilder sb, String className, String parentClassName) {
     sb.append(String.format("%n%n"));
     sb.append(String.format("%n@Entity"));
-    sb.append(String.format("%npublic class %s {", className));
+    sb.append(String.format("%npublic class %s", className));
+    if (parentClassName != null && !parentClassName.isEmpty()) {
+      sb.append(" extends ").append(parentClassName);
+    }
+    sb.append(" {");
   }
 
   private void endClass(StringBuilder sb, String className) {
