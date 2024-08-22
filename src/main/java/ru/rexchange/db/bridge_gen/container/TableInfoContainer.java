@@ -1,5 +1,7 @@
 package ru.rexchange.db.bridge_gen.container;
 
+import ru.rexchange.exception.SystemException;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,6 +17,7 @@ public class TableInfoContainer {
     String BOOLEAN = "boolean";
     String LONG = "long";
     String ID = "id";
+    String UUID = "uuid";
     String DOUBLE = "double";
     String FLOAT = "float";
     String DATE = "date";//todo избавиться от использования устаревшего класса
@@ -164,6 +167,7 @@ public class TableInfoContainer {
   private static String getJavaType(String jsonType) {
     switch (jsonType) {
       case TableInfoContainer.DataType.STRING:
+      case TableInfoContainer.DataType.UUID:
         return "String";
       case TableInfoContainer.DataType.INTEGER:
         return "Integer";// integer
@@ -180,7 +184,8 @@ public class TableInfoContainer {
         return "Date";// date
       case TableInfoContainer.DataType.DATETIME:
         return "Timestamp";// timestamp
+      default:
+        throw new SystemException("Unknown type - " + jsonType);
     }
-    return null;
   }
 }

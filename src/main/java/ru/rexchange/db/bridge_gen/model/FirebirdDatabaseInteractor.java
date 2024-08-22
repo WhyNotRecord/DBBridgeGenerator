@@ -68,6 +68,8 @@ public abstract class FirebirdDatabaseInteractor extends AbstractDatabaseInterac
         return "D_BIGINT";// bigint
       case TableInfoContainer.DataType.ID:
         return "D_ID";// bigint
+      case TableInfoContainer.DataType.UUID:
+        return "D_UUID";// char
       case TableInfoContainer.DataType.DOUBLE:
         return "D_DOUBLE";// double precision
       case TableInfoContainer.DataType.FLOAT:
@@ -115,6 +117,9 @@ public abstract class FirebirdDatabaseInteractor extends AbstractDatabaseInterac
     if (!domainExists("D_ID")) {
       createDomain(new DomainInfo(TableInfoContainer.DataType.ID));
     }
+    /*if (!domainExists("D_UUID")) {
+      createDomain(new DomainInfo(TableInfoContainer.DataType.UUID));
+    }*/
     if (!domainExists("D_DOUBLE")) {
       createDomain(new DomainInfo(TableInfoContainer.DataType.DOUBLE));
     }
@@ -153,7 +158,7 @@ public abstract class FirebirdDatabaseInteractor extends AbstractDatabaseInterac
 
   @Override
   public Map<String, String> fieldConstraints(String field, String tableName) throws SQLException, ClassNotFoundException {
-    return DBUtils.getStringPairs(getConnection(), String.format(Q_CONSTRAINT_FIELDS_SELECT,  tableName, field));
+    return DBUtils.getStringPairs(getConnection(), String.format(Q_CONSTRAINT_FIELDS_SELECT, tableName, field));
     //return DBUtils.getStringList(getConnection(), Q_CONSTRAINT_SELECT,  tableName, field);
   }
 
@@ -180,24 +185,25 @@ public abstract class FirebirdDatabaseInteractor extends AbstractDatabaseInterac
   @Override
   public String getDBSpecificType(DomainInfo domain) {
     switch (domain.getType()) {
-    case TableInfoContainer.DataType.STRING:
-      return String.format("varchar(%s)", domain.getSize());
-    case TableInfoContainer.DataType.INTEGER:
-      return "INTEGER";// integer
-    case TableInfoContainer.DataType.BOOLEAN:
-      return "SMALLINT";// smallint
-    case TableInfoContainer.DataType.LONG:
-      return "BIGINT";// bigint
-    case TableInfoContainer.DataType.ID:
-      return "BIGINT";// bigint
-    case TableInfoContainer.DataType.DOUBLE:
-      return "DOUBLE PRECISION";// double precision
-    case TableInfoContainer.DataType.FLOAT:
-      return "FLOAT";// float
-    case TableInfoContainer.DataType.DATE:
-      return "DATE";// date
-    case TableInfoContainer.DataType.DATETIME:
-      return "TIMESTAMP";// timestamp
+      case TableInfoContainer.DataType.STRING:
+      case TableInfoContainer.DataType.UUID:
+        return String.format("varchar(%s)", domain.getSize());
+      case TableInfoContainer.DataType.INTEGER:
+        return "INTEGER";// integer
+      case TableInfoContainer.DataType.BOOLEAN:
+        return "SMALLINT";// smallint
+      case TableInfoContainer.DataType.LONG:
+        return "BIGINT";// bigint
+      case TableInfoContainer.DataType.ID:
+        return "BIGINT";// bigint
+      case TableInfoContainer.DataType.DOUBLE:
+        return "DOUBLE PRECISION";// double precision
+      case TableInfoContainer.DataType.FLOAT:
+        return "FLOAT";// float
+      case TableInfoContainer.DataType.DATE:
+        return "DATE";// date
+      case TableInfoContainer.DataType.DATETIME:
+        return "TIMESTAMP";// timestamp
     }
     return null;
   }
