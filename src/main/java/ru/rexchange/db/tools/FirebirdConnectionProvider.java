@@ -13,7 +13,7 @@ public class FirebirdConnectionProvider {
   public static final String DB_PASS_SYS_SETTING = "ru.rexchange.db.pass";
   private static final String DEF_DRIVER = "org.firebirdsql.jdbc.FBDriver";
   private static final String DEF_USER = "SYSDBA";
-  private static final String DEF_PASS = "masterkek";
+  private static final String DEF_PASS = "masterkey";
 
   public static Connection createConnection(String dbPath) throws ClassNotFoundException, SQLException {
     // Register JDBC driver
