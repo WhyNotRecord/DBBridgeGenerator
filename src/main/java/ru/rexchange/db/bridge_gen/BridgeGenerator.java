@@ -20,10 +20,12 @@ import java.util.Map.Entry;
 public class BridgeGenerator {
   protected static final Logger LOGGER = LogManager.getLogger(BridgeGenerator.class);
   private static final String CONST_GEN_PACKAGE = "ru.rexchange.gen";
-  AbstractDatabaseInteractor db = null;
+  private AbstractDatabaseInteractor db = null;
+  private final boolean dropFields;
 
-  public BridgeGenerator(AbstractDatabaseInteractor db) {
+  public BridgeGenerator(AbstractDatabaseInteractor db, boolean dropFields) {
     this.db = db;
+    this.dropFields = dropFields;
   }
 
   public boolean processData(String data) {
@@ -92,7 +94,8 @@ public class BridgeGenerator {
     }
 
     processNewFields(tableName, newFields);
-    processOldFields(tableName, removedFields);
+    if (dropFields)
+      processOldFields(tableName, removedFields);
     updateFields(tableName, updatedFields);
   }
 
@@ -184,6 +187,7 @@ public class BridgeGenerator {
     sb.append(String.format("%nimport java.sql.ResultSet;"));
     sb.append(String.format("%nimport java.sql.SQLException;"));
     sb.append(String.format("%nimport java.util.Map;"));
+    sb.append(String.format("%nimport java.util.Objects;"));
     sb.append(String.format("%nimport javax.persistence.Entity;"));
     sb.append(String.format("%nimport ru.rexchange.db.tools.DBUtils;"));
     sb.append(String.format("%nimport ru.rexchange.exception.SystemException;"));
@@ -354,6 +358,9 @@ public class BridgeGenerator {
       if ("Float".equals(javaType)) {
         sb.append(String.format("%n      this.%1$s = result.get(FIELD_%2$s) == null ? " +
             "null : ((Double) result.get(FIELD_%2$s)).floatValue();", fieldName, fi.getName()));
+      } else if ("Boolean".equals(javaType)) {
+        sb.append(String.format("%n      this.%1$s = result.get(FIELD_%2$s) == null ? " +
+            "null : Objects.equals(result.get(FIELD_%2$s), 1);", fieldName, fi.getName()));
       } else {
         sb.append(String.format("%n      this.%s = (%s) result.get(FIELD_%s);", fieldName, javaType, fi.getName()));
       }

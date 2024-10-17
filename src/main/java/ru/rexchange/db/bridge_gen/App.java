@@ -39,11 +39,14 @@ public class App {
     LOGGER.info("Starting Database Bridge Generator...");
     String jsonDbConfigFile = "tables.json";
     String dbPath = "localhost:default_site_db";
+    boolean dropFields = false;
     for (int i = 0; i < args.length; i++) {
       if (args[i].equals("-in") && i < args.length - 1) {
         jsonDbConfigFile = args[++i];
       } else if (args[i].equals("-db") && i < args.length - 1) {
         dbPath = args[++i];
+      } else if (args[i].equals("-drop") && i < args.length - 1) {
+        dropFields = true;
       } else if (args[i].equals("-pas") && i < args.length - 1) {
         System.setProperty(FirebirdConnectionProvider.DB_PASS_SYS_SETTING, args[++i]);
       } else {
@@ -58,7 +61,7 @@ public class App {
         return FirebirdConnectionProvider.createConnection(finalDbPath);
       }
     };
-    BridgeGenerator bg = new BridgeGenerator(db);
+    BridgeGenerator bg = new BridgeGenerator(db, dropFields);
     LOGGER.info(String.format("File %s is chosen for processing", jsonDbConfigFile));
     try (InputStream is = new FileInputStream(jsonDbConfigFile)) {
       bg.processData(FileUtils.readToString(is, "UTF-8"));
