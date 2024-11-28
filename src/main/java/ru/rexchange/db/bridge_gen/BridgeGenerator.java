@@ -168,11 +168,15 @@ public class BridgeGenerator {
     processFields(sb, tableInfo.getFields());
     addConstructor(sb, tableInfo);
     if (!tableInfo.isTransient()) {
+      //TODO поля родительского объекта не сохраняются и не загружаются
+      addGetTableNameFunction(sb);
       addLoadFunction(sb, tableInfo);
+      addFillFunction(sb, tableInfo);
       addSaveFunction(sb, tableInfo);
       addInsertFunction(sb, tableInfo);
       addUpdateFunction(sb, tableInfo);
     }
+    //TODO getter для имени таблицы
 
     endClass(sb, className);
     result.put(className, sb.toString());
@@ -284,7 +288,7 @@ public class BridgeGenerator {
         sb.append(String.format("%s = ?, ", fi.getName()));
     }
     sb.setLength(sb.length() - 2);
-    sb.append(String.format(" WHERE ", tableInfo.getName()));
+    sb.append(String.format(" WHERE "));
     for (FieldInfo fi : tableInfo.getPrimaryFields()) {
       sb.append(String.format("%s = ? AND ", fi.getName()));
     }
@@ -334,6 +338,10 @@ public class BridgeGenerator {
     sb.append(String.format("%n  }"));
   }
 
+  private void addGetTableNameFunction(StringBuilder sb) {
+    sb.append(String.format("%n%n  public String getTableName() {%n    return TABLE_NAME;%n  }"));
+  }
+
   private void addLoadFunction(StringBuilder sb, TableInfoContainer tableInfo) {
     sb.append(String.format(
         "%n%n  public void load(Connection conn) throws SQLException, UserException, SystemException {"));
@@ -352,19 +360,7 @@ public class BridgeGenerator {
     }
     sb.append(");");
     sb.append(String.format("%n    if (result != null) {"));
-    for (FieldInfo fi : tableInfo.getFields()) {
-      String fieldName = StringUtils.toLowerCamelCase(fi.getName());
-      String javaType = fi.getDomain().getJavaType();
-      if ("Float".equals(javaType)) {
-        sb.append(String.format("%n      this.%1$s = result.get(FIELD_%2$s) == null ? " +
-            "null : ((Double) result.get(FIELD_%2$s)).floatValue();", fieldName, fi.getName()));
-      } else if ("Boolean".equals(javaType)) {
-        sb.append(String.format("%n      this.%1$s = result.get(FIELD_%2$s) == null ? " +
-            "null : Objects.equals(result.get(FIELD_%2$s), 1);", fieldName, fi.getName()));
-      } else {
-        sb.append(String.format("%n      this.%s = (%s) result.get(FIELD_%s);", fieldName, javaType, fi.getName()));
-      }
-    }
+    sb.append(String.format("%n      fillFromResultSet(result);"));
     sb.append(String.format("%n      isNew = false;"));
     sb.append(String.format("%n    } else {"));
     sb.append(String.format("%n      throw new UserException(\"Cannot find object ("));
@@ -381,6 +377,25 @@ public class BridgeGenerator {
     }
     sb.append(");");
     sb.append(String.format("%n    }"));
+    sb.append(String.format("%n  }"));
+  }
+
+  private void addFillFunction(StringBuilder sb, TableInfoContainer tableInfo) {
+    sb.append(String.format(
+        "%n%n  public void fillFromResultSet(Map<String, Object> result) {"));
+    for (FieldInfo fi : tableInfo.getFields()) {
+      String fieldName = StringUtils.toLowerCamelCase(fi.getName());
+      String javaType = fi.getDomain().getJavaType();
+      if ("Float".equals(javaType)) {
+        sb.append(String.format("%n    this.%1$s = result.get(FIELD_%2$s) == null ? " +
+            "null : ((Double) result.get(FIELD_%2$s)).floatValue();", fieldName, fi.getName()));
+      } else if ("Boolean".equals(javaType)) {
+        sb.append(String.format("%n    this.%1$s = result.get(FIELD_%2$s) == null ? " +
+            "null : Objects.equals(result.get(FIELD_%2$s), 1);", fieldName, fi.getName()));
+      } else {
+        sb.append(String.format("%n    this.%s = (%s) result.get(FIELD_%s);", fieldName, javaType, fi.getName()));
+      }
+    }
     sb.append(String.format("%n  }"));
   }
 
