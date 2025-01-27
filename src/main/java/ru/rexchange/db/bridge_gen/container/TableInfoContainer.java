@@ -9,6 +9,7 @@ public class TableInfoContainer {
   String name;
   String parent;
   boolean isTransient = false;
+  boolean isParent = false;
   List<FieldInfo> fields;
 
   public interface DataType {
@@ -154,6 +155,14 @@ public class TableInfoContainer {
 
   public void setTransient(boolean aTransient) {
     isTransient = aTransient;
+  }
+
+  public boolean isParent() {
+    return isParent;
+  }
+
+  public void setIsParent(boolean parent) {
+    isParent = parent;
   }
 
   public String getParent() {

@@ -35,7 +35,7 @@ public class BridgeGenerator {
     try {
       db.initBaseDomains();
       for (TableInfoContainer table : tables) {
-        if (!table.isTransient())
+        if (!table.isTransient() && !table.isParent())
           processDatabaseObjects(table);
         classes.putAll(processCodeObjects(table));
       }
@@ -167,16 +167,17 @@ public class BridgeGenerator {
     }
     processFields(sb, tableInfo.getFields());
     addConstructor(sb, tableInfo);
+    addSecondConstructor(sb, tableInfo);
+    addCreateAndLoad(sb, tableInfo);
+    addGetTableNameFunction(sb);
     if (!tableInfo.isTransient()) {
       //TODO поля родительского объекта не сохраняются и не загружаются
-      addGetTableNameFunction(sb);
       addLoadFunction(sb, tableInfo);
       addFillFunction(sb, tableInfo);
       addSaveFunction(sb, tableInfo);
       addInsertFunction(sb, tableInfo);
       addUpdateFunction(sb, tableInfo);
     }
-    //TODO getter для имени таблицы
 
     endClass(sb, className);
     result.put(className, sb.toString());
@@ -228,15 +229,10 @@ public class BridgeGenerator {
 
   private void addQueryDummies(StringBuilder sb, TableInfoContainer tableInfo) {
     sb.append(String.format("%n  private static final String QUERY_LOAD_OBJECT = "));
-
     sb.append(String.format("\"%s\";", generateSelectQuery(tableInfo)));
-
     sb.append(String.format("%n  private static final String QUERY_INSERT_OBJECT = "));
-
     sb.append(String.format("\"%s\";", generateInsertQuery(tableInfo)));
-
     sb.append(String.format("%n  private static final String QUERY_UPDATE_OBJECT = "));
-
     sb.append(String.format("\"%s\";", generateUpdateQuery(tableInfo)));
 
     for (FieldInfo field : tableInfo.getFields()) {
@@ -323,18 +319,44 @@ public class BridgeGenerator {
   private void addConstructor(StringBuilder sb, TableInfoContainer tableInfo) {
     String className = StringUtils.toUpperCamelCase(tableInfo.getName());
     sb.append(String.format("%n%n  public %s(", className));
-    /*List<String> pkFields = new ArrayList<>();
+    sb.append(") {");
+    sb.append(String.format("%n  }"));
+  }
+
+  private void addSecondConstructor(StringBuilder sb, TableInfoContainer tableInfo) {
+    String className = StringUtils.toUpperCamelCase(tableInfo.getName());
+    sb.append(String.format("%n%n  public %s(", className));
+    List<String> pkFields = new ArrayList<>();
+    for (FieldInfo fi : tableInfo.getPrimaryFields()) {
+      String fieldName = StringUtils.toLowerCamelCase(fi.getName());
+      sb.append(String.format("%s %s, ", fi.getDomain().getJavaType(), fieldName));
+      pkFields.add(fieldName);
+    }
+    sb.setLength(sb.length() - 2);
+    sb.append(") {");
+    for (String pkField : pkFields) {
+      sb.append(String.format("%n    this.%1$s = %1$s;", pkField));
+    }
+    sb.append(String.format("%n  }"));
+  }
+
+  private void addCreateAndLoad(StringBuilder sb, TableInfoContainer tableInfo) {
+    String className = StringUtils.toUpperCamelCase(tableInfo.getName());
+    sb.append(String.format("%n%n  public static %s createAndLoad(Connection conn, ", className));
+    List<String> pkFields = new ArrayList<>();
     for (FieldInfo fi : tableInfo.getPrimaryFields()) {
     	String fieldName = StringUtils.toLowerCamelCase(fi.getName());
     	sb.append(String.format("%s %s, ", fi.getDomain().getJavaType(), fieldName));
     	pkFields.add(fieldName);
     }
-    sb.setLength(sb.length() - 2);*/
-    sb.append(") {");
-    /*for (String pkField : pkFields) {
-    	sb.append(String.format("%n    this.%1$s = %1$s;", pkField));
-    }*/
-    //todo либо вернуть конструктор с ПК либо добавить статическую функцию для создания и загрузки
+    sb.setLength(sb.length() - 2);
+    sb.append(") throws SQLException, UserException, SystemException {");
+    sb.append(String.format("%n    %1$s instance = new %1$s();", className));
+    for (String pkField : pkFields) {
+    	sb.append(String.format("%n    instance.%1$s = %1$s;", pkField));
+    }
+    sb.append("\n    instance.load(conn);");
+    sb.append("\n    return instance;");
     sb.append(String.format("%n  }"));
   }
 
@@ -411,24 +433,31 @@ public class BridgeGenerator {
   }
 
   private void addInsertFunction(StringBuilder sb, TableInfoContainer tableInfo) {
-    sb.append(String.format(
-        "%n%n  public boolean insert(Connection conn) throws SQLException {"));
-    for (FieldInfo fi : tableInfo.getFields()) {
-      if (TableInfoContainer.DataType.ID.equals(fi.getDomain().getType()) && fi.isGenerated()) {
-        sb.append(String.format("%n    this.%s = DBUtils.getLongValue(conn, QUERY_%s_SEQ_VALUE);",
-            StringUtils.toLowerCamelCase(fi.getName()), fi.getName().toUpperCase()));
+    if (!tableInfo.isParent()) {
+      sb.append(String.format(
+          "%n%n  public boolean insert(Connection conn) throws SQLException {"));
+      for (FieldInfo fi : tableInfo.getFields()) {
+        if (TableInfoContainer.DataType.ID.equals(fi.getDomain().getType()) && fi.isGenerated()) {
+          sb.append(String.format("%n    this.%s = DBUtils.getLongValue(conn, QUERY_%s_SEQ_VALUE);",
+              StringUtils.toLowerCamelCase(fi.getName()), fi.getName().toUpperCase()));
+        }
       }
+      sb.append(
+          String.format("%n    boolean result = DBUtils.executeQuery(conn, QUERY_INSERT_OBJECT"));
+      for (FieldInfo fi : tableInfo.getFields()) {
+        String fieldName = StringUtils.toLowerCamelCase(fi.getName());
+        sb.append(String.format(", %s", fieldName));
+      }
+      sb.append(");");
+      sb.append(String.format("%n    isNew = false;"));
+      sb.append(String.format("%n    return result;"));
+      sb.append(String.format("%n  }"));
+    } else {
+      sb.append(String.format(
+          "%n%n  public boolean insert(Connection conn) throws SQLException {"));
+      sb.append(String.format("%n    throw new UnsupportedOperationException(\"Parent object cannot be inserted\");"));
+      sb.append(String.format("%n  }"));
     }
-    sb.append(
-        String.format("%n    boolean result = DBUtils.executeQuery(conn, QUERY_INSERT_OBJECT"));
-    for (FieldInfo fi : tableInfo.getFields()) {
-      String fieldName = StringUtils.toLowerCamelCase(fi.getName());
-      sb.append(String.format(", %s", fieldName));
-    }
-    sb.append(");");
-    sb.append(String.format("%n    isNew = false;"));
-    sb.append(String.format("%n    return result;"));
-    sb.append(String.format("%n  }"));
   }
 
   private void addUpdateFunction(StringBuilder sb, TableInfoContainer tableInfo) {
