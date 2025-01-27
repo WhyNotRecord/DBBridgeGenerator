@@ -165,7 +165,7 @@ public class BridgeGenerator {
       addQueryDummies(sb, tableInfo);
       addServiceFields(sb);
     }
-    processFields(sb, tableInfo.getFields());
+    processFields(sb, tableInfo.getFields(), tableInfo.getParent() != null);
     addConstructor(sb, tableInfo);
     addSecondConstructor(sb, tableInfo);
     addCreateAndLoad(sb, tableInfo);
@@ -297,8 +297,10 @@ public class BridgeGenerator {
         db.getSequenceName(fieldName, tableName));
   }
 
-  private void processFields(StringBuilder sb, List<FieldInfo> fields) {
+  private void processFields(StringBuilder sb, List<FieldInfo> fields, boolean hasParent) {
     for (FieldInfo fi : fields) {
+      if (fi.isPrimary() && hasParent)
+        continue;
       processField(sb, fi);
     }
   }
@@ -365,6 +367,7 @@ public class BridgeGenerator {
   }
 
   private void addLoadFunction(StringBuilder sb, TableInfoContainer tableInfo) {
+    String className = StringUtils.toUpperCamelCase(tableInfo.getName());
     sb.append(String.format(
         "%n%n  public void load(Connection conn) throws SQLException, UserException, SystemException {"));
     int pkCount = 0;
@@ -387,7 +390,7 @@ public class BridgeGenerator {
     }
     sb.append(");");
     sb.append(String.format("%n    if (result != null) {"));
-    sb.append(String.format("%n      fillFromResultSet(result);"));
+    sb.append(String.format("%n      %s.fillFromResultSet(result, this);", className));
     sb.append(String.format("%n      isNew = false;"));
     sb.append(String.format("%n    } else {"));
     sb.append(String.format("%n      throw new UserException(\"Cannot find object ("));
@@ -411,19 +414,20 @@ public class BridgeGenerator {
   }
 
   private void addFillFunction(StringBuilder sb, TableInfoContainer tableInfo) {
+    String className = StringUtils.toUpperCamelCase(tableInfo.getName());
     sb.append(String.format(
-        "%n%n  public void fillFromResultSet(Map<String, Object> result) {"));
+        "%n%n  public static void fillFromResultSet(Map<String, Object> result, %s obj) {", className));
     for (FieldInfo fi : tableInfo.getFields()) {
       String fieldName = StringUtils.toLowerCamelCase(fi.getName());
       String javaType = fi.getDomain().getJavaType();
       if ("Float".equals(javaType)) {
-        sb.append(String.format("%n    this.%1$s = result.get(FIELD_%2$s) == null ? " +
+        sb.append(String.format("%n    obj.%1$s = result.get(FIELD_%2$s) == null ? " +
             "null : ((Double) result.get(FIELD_%2$s)).floatValue();", fieldName, fi.getName()));
       } else if ("Boolean".equals(javaType)) {
-        sb.append(String.format("%n    this.%1$s = result.get(FIELD_%2$s) == null ? " +
+        sb.append(String.format("%n    obj.%1$s = result.get(FIELD_%2$s) == null ? " +
             "null : Objects.equals(result.get(FIELD_%2$s), 1);", fieldName, fi.getName()));
       } else {
-        sb.append(String.format("%n    this.%s = (%s) result.get(FIELD_%s);", fieldName, javaType, fi.getName()));
+        sb.append(String.format("%n    obj.%s = (%s) result.get(FIELD_%s);", fieldName, javaType, fi.getName()));
       }
     }
     sb.append(String.format("%n  }"));
