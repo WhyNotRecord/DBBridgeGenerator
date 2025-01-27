@@ -252,7 +252,7 @@ public class BridgeGenerator {
       sb.append(String.format("%s, ", fi.getName()));
     }
     sb.setLength(sb.length() - 2);
-    sb.append(String.format(" FROM %s WHERE ", tableInfo.getName()));
+    sb.append(String.format(" FROM %s WHERE ", tableInfo.isParent() ? "%s" : tableInfo.getName()));
     for (FieldInfo fi : tableInfo.getPrimaryFields()) {
       sb.append(String.format("%s = ? AND ", fi.getName()));
     }
@@ -262,7 +262,7 @@ public class BridgeGenerator {
 
   private String generateInsertQuery(TableInfoContainer tableInfo) {
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format("INSERT INTO %s(", tableInfo.getName()));
+    sb.append(String.format("INSERT INTO %s(", tableInfo.isParent() ? "%s" : tableInfo.getName()));
     for (FieldInfo fi : tableInfo.getFields()) {
       sb.append(String.format("%s, ", fi.getName()));
     }
@@ -278,7 +278,7 @@ public class BridgeGenerator {
 
   private String generateUpdateQuery(TableInfoContainer tableInfo) {
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format("UPDATE %s SET ", tableInfo.getName()));
+    sb.append(String.format("UPDATE %s SET ", tableInfo.isParent() ? "%s" : tableInfo.getName()));
     for (FieldInfo fi : tableInfo.getFields()) {
       if (!fi.isPrimary())
         sb.append(String.format("%s = ?, ", fi.getName()));
@@ -374,8 +374,13 @@ public class BridgeGenerator {
           + "      throw new SystemException(\"Primary key (%1$s) is null\");", fieldName));
       pkCount++;
     }
-    sb.append(String.format(
-        "%n    Map<String, Object> result = DBUtils.getQueryResult(conn, QUERY_LOAD_OBJECT"));
+    if (tableInfo.isParent()) {
+      sb.append(String.format(
+          "%n    Map<String, Object> result = DBUtils.getQueryResult(conn, String.format(QUERY_LOAD_OBJECT, getTableName())"));
+    } else {
+      sb.append(String.format(
+          "%n    Map<String, Object> result = DBUtils.getQueryResult(conn, QUERY_LOAD_OBJECT"));
+    }
     for (FieldInfo fi : tableInfo.getPrimaryFields()) {
       String fieldName = StringUtils.toLowerCamelCase(fi.getName());
       sb.append(String.format(", %s", fieldName));
@@ -399,6 +404,9 @@ public class BridgeGenerator {
     }
     sb.append(");");
     sb.append(String.format("%n    }"));
+    if (tableInfo.getParent() != null) {
+      sb.append(String.format("%n    super.load(conn);"));
+    }
     sb.append(String.format("%n  }"));
   }
 
@@ -425,9 +433,17 @@ public class BridgeGenerator {
     sb.append(String.format(
         "%n%n  public boolean save(Connection conn) throws SQLException {"));
     sb.append(String.format("%n    if (isNew) {"));
-    sb.append(String.format("%n      return insert(conn);"));
+    if (tableInfo.getParent() != null) {
+      sb.append(String.format("%n      return insert(conn) && super.update(conn);"));
+    } else {
+      sb.append(String.format("%n      return insert(conn);"));
+    }
     sb.append(String.format("%n    } else {"));
-    sb.append(String.format("%n      return update(conn);"));
+    if (tableInfo.getParent() != null) {
+      sb.append(String.format("%n      return update(conn) && super.update(conn);"));
+    } else {
+      sb.append(String.format("%n      return update(conn);"));
+    }
     sb.append(String.format("%n    }"));
     sb.append(String.format("%n  }"));
   }
@@ -442,8 +458,12 @@ public class BridgeGenerator {
               StringUtils.toLowerCamelCase(fi.getName()), fi.getName().toUpperCase()));
         }
       }
-      sb.append(
-          String.format("%n    boolean result = DBUtils.executeQuery(conn, QUERY_INSERT_OBJECT"));
+      if (tableInfo.isParent()) {
+        sb.append(String.format(
+            "%n    boolean result = DBUtils.executeQuery(conn, String.format(QUERY_INSERT_OBJECT, getTableName())"));
+      } else {
+        sb.append(String.format("%n    boolean result = DBUtils.executeQuery(conn, QUERY_INSERT_OBJECT"));
+      }
       for (FieldInfo fi : tableInfo.getFields()) {
         String fieldName = StringUtils.toLowerCamelCase(fi.getName());
         sb.append(String.format(", %s", fieldName));
@@ -461,9 +481,13 @@ public class BridgeGenerator {
   }
 
   private void addUpdateFunction(StringBuilder sb, TableInfoContainer tableInfo) {
-    sb.append(String.format(
-        "%n%n  public boolean update(Connection conn) throws SQLException {"));
-    sb.append(String.format("%n    return DBUtils.executeQuery(conn, QUERY_UPDATE_OBJECT"));
+    sb.append(String.format("%n%n  public boolean update(Connection conn) throws SQLException {"));
+    if (tableInfo.isParent()) {
+      sb.append(String.format(
+          "%n    return DBUtils.executeQuery(conn, String.format(QUERY_UPDATE_OBJECT, getTableName())"));
+    } else {
+      sb.append(String.format("%n    return DBUtils.executeQuery(conn, QUERY_UPDATE_OBJECT"));
+    }
     List<FieldInfo> pkFields = new ArrayList<>();
     for (FieldInfo fi : tableInfo.getFields()) {
       if (fi.isPrimary()) {
